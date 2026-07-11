@@ -110,18 +110,25 @@ done
 # --- Python tools -----------------------------------------------------------
 if [[ "$GO_ONLY" == 0 ]]; then
   log_step "Installing Python tools (pipx)"
-  for spec in "uro" "arjun" "paramspider@git+https://github.com/devanshbatham/paramspider" \
-              "theHarvester"; do
-    name="${spec%@*}"
+  # name -> pipx install spec. paramspider is git-only (not on PyPI), so it
+  # needs the full VCS URL; installing the bare name would fail.
+  declare -A PY_TOOLS=(
+    [uro]="uro"
+    [arjun]="arjun"
+    [paramspider]="git+https://github.com/devanshbatham/paramspider.git"
+    [theHarvester]="theHarvester"
+  )
+  for name in uro arjun paramspider theHarvester; do
     if command -v "$name" >/dev/null 2>&1; then
       log_info "already installed: $name"
+      continue
+    fi
+    printf '  installing %-14s… ' "$name"
+    if py_out=$(pipx install "${PY_TOOLS[$name]}" 2>&1); then
+      echo "${C_GREEN}ok${C_RESET}"
     else
-      printf '  installing %-14s… ' "$name"
-      if pipx install "${spec/@git/ git}" >/dev/null 2>&1 || pipx install "$name" >/dev/null 2>&1; then
-        echo "${C_GREEN}ok${C_RESET}"
-      else
-        echo "${C_YELLOW}skip (install manually)${C_RESET}"
-      fi
+      echo "${C_RED}failed${C_RESET}"
+      echo "$py_out" | tail -2 | sed 's/^/      /'
     fi
   done
 
