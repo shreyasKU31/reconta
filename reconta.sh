@@ -15,13 +15,24 @@
 set -uo pipefail   # note: NOT -e — recon tools legitimately return non-zero.
 
 # --- Locate ourselves so it works from any CWD ------------------------------
-RECONTA_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks so a global install (e.g. /usr/local/bin/reconta -> the real
+# script under /opt/reconta) still finds lib/, modules/, and config/.
+_src="${BASH_SOURCE[0]}"
+while [ -h "$_src" ]; do
+  _dir="$(cd -P "$(dirname "$_src")" >/dev/null 2>&1 && pwd)"
+  _src="$(readlink "$_src")"
+  case "$_src" in /*) ;; *) _src="$_dir/$_src";; esac
+done
+RECONTA_HOME="$(cd -P "$(dirname "$_src")" >/dev/null 2>&1 && pwd)"
+unset _src _dir
 export RECONTA_HOME
 RECONTA_VERSION="1.0.0"
 
 # --- Defaults (overridden by config, then flags) ----------------------------
 TARGET=""
-OUTBASE="$RECONTA_HOME/output"
+# Default output goes under the current working directory, so a root-owned
+# global install still writes results somewhere the user can access.
+OUTBASE="$PWD/output"
 CONFIG="$RECONTA_HOME/config/reconta.conf"
 PROFILE_OVERRIDE=""
 
