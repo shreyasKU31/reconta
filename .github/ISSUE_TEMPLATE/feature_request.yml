@@ -1,0 +1,40 @@
+name: 💡 Feature request
+description: Suggest a new tool, signature, or capability
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The recon/triage pain point you're hitting.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        A new module/tool? A new signature? A report improvement? If it's a
+        signature, include the pattern and a suggested weight.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Signatures / prioritization
+        - New tool or source
+        - Reporting / output
+        - Performance
+        - Change detection / monitoring
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

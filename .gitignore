@@ -1,0 +1,16 @@
+# Reconta scan results — never commit loot / target data
+output/
+loot/
+*.log
+
+# Personal scratch / planning notes (not part of the published project)
+New Text Document.txt
+
+# Local overrides
+config/reconta.local.conf
+.env
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,48 @@
+# =============================================================================
+# signatures.txt — Reconta's prioritization knowledge base.
+#
+# This is what turns a heap of URLs into a ranked "look here first" list.
+# Each line scores an asset; a URL/host can match many lines and accumulate.
+#
+# Format (whitespace-separated, exactly 3 fields):
+#     WEIGHT  CATEGORY  REGEX
+#
+#   WEIGHT   integer priority (higher = more interesting / higher impact)
+#   CATEGORY short tag shown next to the finding (no spaces)
+#   REGEX    POSIX ERE, matched case-insensitively against the whole URL.
+#            MUST contain no spaces. Use character classes / alternation.
+#
+# Lines starting with # are comments. Add your own — this file is the point of
+# extension: tune weights to your targets, drop in new leak/param patterns.
+# =============================================================================
+
+# ---- Direct exposures: highest value, often instantly reportable -----------
+95 sensitive-file (\.git/|/\.git$|\.gitignore|\.env($|\.|/)|\.svn/|\.htpasswd|\.htaccess|\.bak|\.old|\.backup|\.swp|\.sql($|\.)|\.sqlite|\.dump|\.tar\.gz|\.zip$|\.7z$|wp-config|web\.config|\.ds_store|id_rsa|\.pem$|\.ppk$|credentials|\.aws/|\.npmrc|\.dockercfg|\.kube/|dump\.)
+90 vcs-exposed (/\.git/config|/\.git/head|/\.svn/entries|/\.hg/|/\.bzr/)
+85 secret-param [?&][^=]*(api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|secret|password|passwd|pwd|token|apikey|jwt|session[_-]?id|credential)[^=]*=
+
+# ---- Interfaces & docs that widen the attack surface -----------------------
+82 api-docs (swagger|swagger-ui|openapi|api-docs|v2/api-docs|graphql|graphiql|\.wsdl|redoc|/soap)
+80 exposed-panel (phpmyadmin|adminer|/actuator|server-status|server-info|/_profiler|/metrics|/env($|/)|phpinfo|jolokia)
+78 exposed-tech (jenkins|gitlab|grafana|kibana|elasticsearch|prometheus|kubernetes|/rundeck|/nexus|/consul|/vault|jira)
+
+# ---- Parameters by likely bug class ----------------------------------------
+75 lfi-path-param [?&](file|filename|filepath|path|folder|dir|document|download|template|include|require|doc|pdf|conf|log|root|pg|style|load)=
+72 redirect-ssrf-param [?&](url|uri|redirect|redirect_uri|redir|next|dest|destination|return|returnurl|return_url|continue|goto|out|target|link|domain|site|host|callback|feed|to|view|data|forward|image_url|remote|fetch|proxy)=
+60 rce-ssti-param [?&](cmd|exec|command|ping|query|jump|code|reg|do|func|arg|option|process|step|read|feature|exe|module|payload|run|print|eval|system)=
+50 injection-param [?&](id|uid|user|userid|pid|cat|category|item|order|sort|q|s|search|query|keyword|name|number|select|where|from|filter|report)=
+
+# ---- Sensitive functionality -----------------------------------------------
+68 upload (/upload|/uploads/|/fileupload|/import($|/)|/attachment|multipart)
+65 admin-auth (/admin($|/|\.)|/administrator|/wp-admin|/wp-login|/signin|/login($|/|\.)|/dashboard|/portal|/manager/html|/cpanel|/webmail|/console)
+62 auth-flow (/oauth|/sso|/saml|/openid|/\.well-known/|/token($|/)|/reset|/forgot|/verify|/mfa|/2fa)
+55 pii-payment (/payment|/checkout|/billing|/invoice|/order($|/)|/account|/profile|/customer|/user/|/employee)
+
+# ---- Infra / non-prod (fresh, less-hardened assets) ------------------------
+55 non-prod-host (//|\.)(dev|develop|development|staging|stage|stg|test|testing|qa|uat|preprod|pre-prod|sandbox|demo|internal|corp|intranet|beta|alpha|old|legacy)[.-]
+58 cloud-storage (s3\.amazonaws\.com|\.s3[.-]|storage\.googleapis\.com|blob\.core\.windows\.net|digitaloceanspaces\.com|\.r2\.cloudflarestorage)
+
+# ---- Endpoints & data formats worth a look ---------------------------------
+45 api-endpoint (/api/|/api\.|/rest/|/v[0-9]+/|/graphql|/rpc|/gateway/|/internal/|/private/)
+40 data-format \.(json|xml|yaml|yml|config|ini|log|csv|xls|xlsx)($|\?)
+38 debug-endpoint (/debug|/trace|/status|/health($|/)|/test($|/)|/tmp/|/temp/|/backup)

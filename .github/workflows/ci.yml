@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: ShellCheck (lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint all shell scripts
+        run: |
+          # Lint the orchestrator, installer, library and every module.
+          shellcheck -x -S warning \
+            reconta.sh install.sh lib/*.sh modules/*.sh
+
+  syntax:
+    name: Bash syntax + smoke run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n every script
+        run: |
+          for f in reconta.sh install.sh lib/*.sh modules/*.sh; do
+            bash -n "$f"
+          done
+      - name: Smoke run (no tools installed → must exit 0 gracefully)
+        run: |
+          chmod +x reconta.sh
+          ./reconta.sh example.com -p quick
+          test -f output/example.com/report.md
+          test -f output/example.com/interesting.txt
+          echo "smoke run produced a report ✓"
+
+  signatures:
+    name: Validate signatures.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every rule must have 3 fields and a numeric weight
+        run: |
+          awk '
+            /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+            NF != 3 { print "Bad field count (line " NR "): " $0; bad=1; next }
+            $1 !~ /^[0-9]+$/ { print "Non-numeric weight (line " NR "): " $0; bad=1 }
+            END { if (bad) exit 1; print "signatures.txt OK" }
+          ' config/signatures.txt

@@ -1,0 +1,64 @@
+name: 🐛 Bug report
+description: Something in Reconta isn't working as expected
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill this out so we can reproduce quickly.
+        **Do not** paste real target data or secrets from your scans.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: "Running `reconta example.com` fails during the urls stage with…"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command
+      render: shell
+      placeholder: "./reconta.sh example.com -p normal"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: The relevant lines from `output/<target>/reconta.log` (redact target data).
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: tools
+    attributes:
+      label: Tool status
+      description: Output of `./reconta.sh --list-tools`
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / environment
+      placeholder: "Kali 2024.2 / Ubuntu 22.04 / WSL2"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Reconta version
+      description: Output of `./reconta.sh --version`
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorized
+    attributes:
+      label: Confirmation
+      options:
+        - label: I was testing a target I am authorized to test.
+          required: true
