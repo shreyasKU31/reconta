@@ -26,12 +26,47 @@ log_ok "Go found: $(go version | awk '{print $3}')"
 # --- System packages --------------------------------------------------------
 if [[ "$GO_ONLY" == 0 ]] && have_tool apt-get; then
   log_step "Installing system packages (sudo)"
-  sudo apt-get update -qq
-  sudo apt-get install -y -qq \
-    jq curl whois nmap masscan python3-pip pipx git libpcap-dev \
-    cewl poppler-utils >/dev/null \
-    && log_ok "system packages installed" \
-    || log_warn "some apt packages failed — continuing"
+
+  # Run apt fully non-interactively. On Kali, upgrading libc6 pulls in the
+  # 'needrestart' prompt ("restart services?"), which hangs forever when apt
+  # output is hidden. These env vars auto-answer it so the install never stalls.
+  export DEBIAN_FRONTEND=noninteractive
+  export NEEDRESTART_MODE=a NEEDRESTART_SUSPEND=1
+
+  # If a previous run was interrupted, dpkg can be left half-configured and
+  # every later install fails. Repair that state before doing anything else.
+  log_info "checking for and repairing any interrupted package state…"
+  sudo dpkg --configure -a 2>/dev/null || true
+
+  log_info "updating apt package lists…"
+  if ! sudo apt-get update -o Acquire::Retries=3; then
+    log_warn "apt-get update failed — check your network/mirrors, then re-run"
+  fi
+
+  # Install one package at a time. This way a single unavailable or broken
+  # package can't stop the others, and you can see exactly which one failed.
+  apt_pkgs="jq curl whois nmap masscan python3-pip pipx git libpcap-dev cewl poppler-utils"
+  apt_failed=""
+  for p in $apt_pkgs; do
+    printf '  %-16s ' "$p"
+    if dpkg -s "$p" >/dev/null 2>&1; then
+      echo "${C_DIM}already installed${C_RESET}"
+      continue
+    fi
+    if apt_out=$(sudo apt-get install -y --no-install-recommends "$p" 2>&1); then
+      echo "${C_GREEN}ok${C_RESET}"
+    else
+      echo "${C_RED}failed${C_RESET}"
+      echo "$apt_out" | tail -3 | sed 's/^/      /'
+      apt_failed="$apt_failed $p"
+    fi
+  done
+  if [[ -n "$apt_failed" ]]; then
+    log_warn "apt packages that failed:$apt_failed"
+    log_warn "try:  sudo dpkg --configure -a && sudo apt-get -f install"
+  else
+    log_ok "system packages installed"
+  fi
   pipx ensurepath >/dev/null 2>&1 || true
 fi
 
