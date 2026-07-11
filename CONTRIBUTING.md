@@ -21,7 +21,7 @@ No contribution is too small. Typo fixes are welcome.
 ## Setting up for development
 
 ```bash
-git clone https://github.com/<you>/reconta.git
+git clone https://github.com/shreyasKU31/reconta.git
 cd reconta
 ./install.sh                 # or: ./install.sh --go-only
 ./reconta.sh --list-tools

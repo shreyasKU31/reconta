@@ -12,7 +12,7 @@ FROM golang:1.22-bookworm
 LABEL org.opencontainers.image.title="Reconta" \
       org.opencontainers.image.description="Recon + Data — de-noised recon & OSINT with prioritized findings" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/<you>/reconta"
+      org.opencontainers.image.source="https://github.com/shreyasKU31/reconta"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/go/bin:/root/.local/bin:${PATH}"
@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # System dependencies (nmap/masscan/whois/jq/pipx + libpcap for naabu).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git curl jq whois nmap masscan dnsutils \
-      python3 python3-pip pipx libpcap-dev \
+      python3 python3-pip pipx libpcap-dev cewl poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/reconta

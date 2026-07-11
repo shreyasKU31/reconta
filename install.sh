@@ -28,7 +28,8 @@ if [[ "$GO_ONLY" == 0 ]] && have_tool apt-get; then
   log_step "Installing system packages (sudo)"
   sudo apt-get update -qq
   sudo apt-get install -y -qq \
-    jq curl whois nmap masscan python3-pip pipx git libpcap-dev >/dev/null \
+    jq curl whois nmap masscan python3-pip pipx git libpcap-dev \
+    cewl poppler-utils >/dev/null \
     && log_ok "system packages installed" \
     || log_warn "some apt packages failed — continuing"
   pipx ensurepath >/dev/null 2>&1 || true
@@ -55,6 +56,8 @@ declare -A GO_TOOLS=(
   [puredns]="github.com/d3mondev/puredns/v2@latest"
   [subzy]="github.com/PentestPad/subzy@latest"
   [gowitness]="github.com/sensepost/gowitness@latest"
+  [ffuf]="github.com/ffuf/ffuf/v2@latest"
+  [gobuster]="github.com/OJ/gobuster/v3@latest"
 )
 for bin in "${!GO_TOOLS[@]}"; do
   if command -v "$bin" >/dev/null 2>&1; then

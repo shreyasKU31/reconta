@@ -2,7 +2,7 @@
 <p align="center">Recon + Data. One command runs a full reconnaissance and OSINT sweep, removes the noise, and hands you a ranked list of what to look at.</p>
 
 <p align="center">
-  <img alt="CI" src="https://github.com/<you>/reconta/actions/workflows/ci.yml/badge.svg">
+  <img alt="CI" src="https://github.com/shreyasKU31/reconta/actions/workflows/ci.yml/badge.svg">
   <img alt="license" src="https://img.shields.io/badge/license-MIT-blue">
   <img alt="shell" src="https://img.shields.io/badge/bash-5%2B-green">
   <img alt="platform" src="https://img.shields.io/badge/platform-Kali%20%7C%20Linux%20%7C%20WSL%20%7C%20macOS-lightgrey">
@@ -73,6 +73,8 @@ subdomains -> resolve (keep only names that resolve and hosts that are live)
                 |     |-> javascript (find JS files and scan them for secrets) -> params
                 |-> osint    (asnmap, whois, theHarvester)
                             |
+                    wordlist (build target-specific lists from the data above)
+                            |
                           vulns (nuclei, subzy)
                             |
              analyze (score and rank) -> diff (find what is new) -> report
@@ -99,8 +101,47 @@ output/example.com/
   report.html       A dashboard you can open in a browser.
   report.md         The same report in Markdown.
   report.json       A machine-readable summary.
+  wordlists/        Target-specific wordlists (see below).
   .raw/             Every intermediate file, grouped by stage.
 ```
+
+## Custom wordlists
+
+Generic wordlists like SecLists are the same for every target. Reconta also
+builds wordlists from the target's own data, so they contain words that generic
+lists miss. This follows a simple flow: gather OSINT, extract the words, generate
+lists, clean them, and hand them to your tools.
+
+- **Extract.** Reconta pulls words from the site's own pages (CeWL), the real
+  path names in the URLs it found, the technologies it fingerprinted, any public
+  PDF documents, and the email addresses from OSINT.
+- **Generate.** From those words it builds four lists: `directories.txt` for
+  content discovery, `usernames.txt` from email names and employee names,
+  `passwords.txt` from the target's words expanded into common patterns, and
+  `subdomains.txt` for permutation.
+- **Clean.** Everything is lowercased, stripped of junk, filtered by length, and
+  de-duplicated.
+- **Use.** Each run writes `wordlists/USAGE.txt` with ready-to-run commands for
+  ffuf, gobuster, hydra, hashcat, and john. In the `deep` profile (or with
+  `WORDLIST_FFUF=1`), Reconta also runs ffuf with the directory list and merges
+  any hidden resources it finds back into `urls.txt`.
+
+```
+output/example.com/wordlists/
+  keywords.txt      the cleaned word pool everything else is built from
+  directories.txt   content and endpoint discovery (ffuf, gobuster)
+  usernames.txt     login and user enumeration (hydra, Burp Intruder)
+  passwords.txt     password guessing (hydra, hashcat, john)
+  subdomains.txt    prefixes for subdomain permutation (alterx, puredns)
+  USAGE.txt         ready-to-run commands for each list
+```
+
+To add employee names you gathered by hand (for example from LinkedIn), put one
+`First Last` per line in `~/.config/reconta/state/<target>/names.txt` before the
+run. Reconta will fold them into `usernames.txt`. Reconta does not scrape social
+networks itself, because that usually breaks their terms of service.
+
+The username and password lists are for authorized credential testing only.
 
 ## Installation
 
@@ -110,7 +151,7 @@ Kali already includes `nmap`, `whois`, `jq`, and Go, so setup is short.
 
 ```bash
 # 1. Download the code
-git clone https://github.com/<you>/reconta.git
+git clone https://github.com/shreyasKU31/reconta.git
 cd reconta
 
 # 2. Install the tools and a DNS resolver list
@@ -161,7 +202,7 @@ warning, skips that step, and continues.
 subfinder, amass, assetfinder, crt.sh, findomain, puredns, alterx, dnsx, httpx,
 naabu, nmap, gau, waybackurls, katana, uro, subjs, trufflehog, mantra, arjun,
 paramspider, asnmap, theHarvester, whois, nuclei, subzy, anew, jq, notify,
-gowitness.
+gowitness, cewl, ffuf, gobuster, pdftotext (poppler-utils).
 
 ## Usage
 

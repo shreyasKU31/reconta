@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Custom wordlist engine (`modules/wordlist.sh`): builds target-specific
+  `directories`, `usernames`, `passwords`, and `subdomains` wordlists from the
+  target's own data (CeWL site vocabulary, URL path tokens, technology names,
+  public PDF text, and OSINT emails), cleans and de-duplicates them, and writes
+  a `wordlists/USAGE.txt` cheat sheet with ready-to-run ffuf, gobuster, hydra,
+  hashcat, and john commands. In the `deep` profile it also runs ffuf with the
+  custom directory list and merges discovered resources into `urls.txt`.
+- `ffuf`, `gobuster`, `cewl`, and `poppler-utils` added to the installer and
+  Docker image; wordlist counts added to the report and `report.json`.
+
 ## [1.0.0] - 2026-07-11
 
 ### Added
@@ -27,5 +38,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Graceful degradation when tools are missing; `--list-tools` status view.
 - `install.sh` for Go/Python/system dependencies on Debian/Ubuntu/Kali/WSL.
 
-[Unreleased]: https://github.com/<you>/reconta/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/<you>/reconta/releases/tag/v1.0.0
+[Unreleased]: https://github.com/shreyasKU31/reconta/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/shreyasKU31/reconta/releases/tag/v1.0.0

@@ -93,7 +93,7 @@ fi
 # --- --list-tools mode ------------------------------------------------------
 CORE_TOOLS=(subfinder assetfinder amass dnsx httpx naabu nmap gau waybackurls
             katana uro anew jq arjun paramspider asnmap theHarvester whois
-            nuclei subzy trufflehog subjs curl)
+            nuclei subzy trufflehog subjs curl ffuf gobuster cewl pdftotext)
 if [[ "${LIST_TOOLS:-0}" == 1 ]]; then
   printf '%sReconta tool status%s\n\n' "$C_BOLD" "$C_RESET"
   for t in "${CORE_TOOLS[@]}"; do
@@ -136,9 +136,10 @@ BANNER
 export TARGET PROFILE THREADS RESOLVER_THREADS RATE_LIMIT HTTP_TIMEOUT
 export ENABLE_PASSIVE_SUBS ENABLE_ACTIVE_SUBS ENABLE_PORTS ENABLE_URLS \
        ENABLE_JS ENABLE_PARAMS ENABLE_OSINT ENABLE_VULNS ENABLE_SCREENSHOTS \
-       ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON
+       ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON ENABLE_WORDLIST
 export NAABU_TOP_PORTS NUCLEI_SEVERITY NUCLEI_RATE NOTIFY MONITOR
 export DNS_WORDLIST RESOLVERS PERM_WORDLIST SIGNATURES STATE_DIR
+export CEWL_DEPTH CEWL_MIN WORDLIST_MINLEN WORDLIST_YEARS WORDLIST_FFUF
 
 OUTDIR="$OUTBASE/$TARGET"
 export OUTDIR
@@ -149,9 +150,9 @@ mkdir -p "$OUTDIR"
 export D_RAW="$OUTDIR/.raw"
 export D_SUBS="$D_RAW/subdomains"  D_PORTS="$D_RAW/ports"  D_URLS="$D_RAW/urls"
 export D_JS="$D_RAW/js"  D_PARAMS="$D_RAW/params"  D_OSINT="$D_RAW/osint"
-export D_VULNS="$D_RAW/vulns"  D_ANALYZE="$D_RAW/analyze"
+export D_VULNS="$D_RAW/vulns"  D_ANALYZE="$D_RAW/analyze"  D_WORDLIST="$D_RAW/wordlist"
 mkdir -p "$D_SUBS" "$D_PORTS" "$D_URLS" "$D_JS" "$D_PARAMS" "$D_OSINT" \
-         "$D_VULNS" "$D_ANALYZE"
+         "$D_VULNS" "$D_ANALYZE" "$D_WORDLIST"
 
 RUN_START=$(date +%s); export RUN_START
 
@@ -160,7 +161,7 @@ exec > >(tee -a "$OUTDIR/reconta.log") 2>&1
 
 # --- Load modules -----------------------------------------------------------
 for m in subdomains resolve osint ports urls javascript params vulns \
-         analyze diff report; do
+         wordlist analyze diff report; do
   # shellcheck source=/dev/null
   source "$RECONTA_HOME/modules/$m.sh"
 done
@@ -190,6 +191,10 @@ module_params
 # Reconverge before vuln scanning + report.
 [[ -n "${PORTS_PID:-}" ]] && wait "$PORTS_PID" 2>/dev/null || true
 [[ -n "${OSINT_PID:-}" ]] && wait "$OSINT_PID" 2>/dev/null || true
+
+# Build target-specific wordlists (needs urls + osint emails + tech); any ffuf
+# discovery here feeds new URLs into the vuln scan and analysis that follow.
+module_wordlist
 
 module_vulns
 
