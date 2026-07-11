@@ -63,7 +63,10 @@ if [[ "$GO_ONLY" == 0 ]] && have_tool apt-get; then
   done
   if [[ -n "$apt_failed" ]]; then
     log_warn "apt packages that failed:$apt_failed"
-    log_warn "try:  sudo dpkg --configure -a && sudo apt-get -f install"
+    log_warn "if it says 'held by process' — kill that apt/dpkg PID, then re-run"
+    log_warn "if it says 'unmet dependencies' — finish the system upgrade first:"
+    log_warn "    sudo apt-get update && sudo apt-get full-upgrade -y"
+    log_warn "then:  sudo apt-get install -y$apt_failed"
   else
     log_ok "system packages installed"
   fi
