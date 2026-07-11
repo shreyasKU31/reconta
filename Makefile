@@ -43,12 +43,13 @@ tools: ## Install the recon toolchain (calls install.sh)
 	./install.sh
 
 .PHONY: install
-install: ## Symlink `reconta` into $(BINDIR) (may need sudo)
+install: ## Install to $(INSTALL_DIR) and link `reconta` into $(BINDIR) (needs sudo)
+	rm -rf "$(INSTALL_DIR)"
 	install -d "$(INSTALL_DIR)"
-	cp -r . "$(INSTALL_DIR)/"
-	chmod +x "$(INSTALL_DIR)/reconta.sh"
+	cp -r reconta.sh install.sh lib modules config Makefile README.md LICENSE "$(INSTALL_DIR)/"
+	chmod +x "$(INSTALL_DIR)/reconta.sh" "$(INSTALL_DIR)/install.sh"
 	ln -sf "$(INSTALL_DIR)/reconta.sh" "$(BINDIR)/reconta"
-	@echo "installed → run 'reconta <target>' from anywhere"
+	@echo "installed $$("$(INSTALL_DIR)/reconta.sh" --version) -> run 'reconta <target>' from anywhere"
 
 .PHONY: uninstall
 uninstall: ## Remove the symlink and installed copy

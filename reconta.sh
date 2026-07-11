@@ -28,6 +28,15 @@ unset _src _dir
 export RECONTA_HOME
 RECONTA_VERSION="1.0.0"
 
+# Fail early and clearly if we can't find our own files (e.g. a stale global
+# install pointing at the wrong directory) instead of a cascade of errors.
+if [[ ! -f "$RECONTA_HOME/lib/common.sh" ]]; then
+  echo "reconta: cannot find lib/common.sh under '$RECONTA_HOME'." >&2
+  echo "         If you installed globally, redeploy from the repo:" >&2
+  echo "           cd ~/reconta && git pull && sudo make install" >&2
+  exit 1
+fi
+
 # --- Defaults (overridden by config, then flags) ----------------------------
 TARGET=""
 # Default output goes under the current working directory, so a root-owned
@@ -152,9 +161,21 @@ export NAABU_TOP_PORTS NUCLEI_SEVERITY NUCLEI_RATE NOTIFY MONITOR
 export DNS_WORDLIST RESOLVERS PERM_WORDLIST SIGNATURES STATE_DIR
 export CEWL_DEPTH CEWL_MIN WORDLIST_MINLEN WORDLIST_YEARS WORDLIST_FFUF
 
+# Everything for a target lives inside one directory named after the target.
+# Reuse it if it already exists (so re-scans build on the same folder),
+# otherwise create it. All files and sub-directories stay inside it.
 OUTDIR="$OUTBASE/$TARGET"
 export OUTDIR
-mkdir -p "$OUTDIR"
+if [[ -d "$OUTDIR" ]]; then
+  log_info "using existing target directory: $OUTDIR"
+else
+  log_info "creating target directory: $OUTDIR"
+fi
+if ! mkdir -p "$OUTDIR" 2>/dev/null; then
+  log_err "cannot create '$OUTDIR' (permission denied?)."
+  log_err "run reconta from a writable directory, or pass -o <dir>."
+  exit 1
+fi
 
 # Working sub-directories for intermediate/raw data (kept out of the top level
 # so the top level stays "broad topic files" only, as required).
