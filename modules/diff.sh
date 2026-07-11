@@ -60,10 +60,10 @@ module_diff() {
     echo " Future runs will list only what changed.)" >> "$newf"
     log_ok "Baseline snapshot saved — no previous run to diff against"
   elif [[ "$total_new" -gt 0 ]]; then
-    log_ok "⚡ $total_new NEW item(s) since last run → new.txt"
+    log_ok "$total_new new item(s) since last run -> new.txt"
     # Push an alert when monitoring is on and something actually changed.
     if [[ "${MONITOR:-0}" == 1 || "${NOTIFY:-0}" == 1 ]] && have_tool notify; then
-      { echo "⚡ Reconta: $total_new new assets on $TARGET";
+      { echo "Reconta: $total_new new assets on $TARGET";
         head -n 20 "$newf" | grep -E '^(##|[a-z0-9])'; } \
         | notify -silent >/dev/null 2>&1 || true
     fi

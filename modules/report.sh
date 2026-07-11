@@ -62,7 +62,7 @@ module_report() {
 
     # The headline: where to actually start.
     if [[ "$n_interesting" -gt 0 ]]; then
-      echo "## 🎯 Start here — top prioritized findings"
+      echo "## Start here - top prioritized findings"
       echo
       echo "Ranked from \`interesting.txt\`. Highest impact/interest first."
       echo
@@ -74,7 +74,7 @@ module_report() {
 
     # What changed since last time — the fresh, un-picked-over surface.
     if [[ "${DIFF_HAD_PRIOR:-0}" == 1 && "$n_new" -gt 0 ]]; then
-      echo "## ⚡ New since last run ($n_new)"
+      echo "## New since last run ($n_new)"
       echo
       echo '```'
       grep -vE '^[[:space:]]*#' "$OUTDIR/new.txt" 2>/dev/null | awk 'NF' | head -n 40
@@ -148,10 +148,10 @@ HTMLHEAD
     _card "Vuln signals" "$n_vulns" danger
     echo '</div>'
     # Headline sections first: where to start, and what's new.
-    printf '<h2>🎯 Start here — top prioritized findings</h2><pre>%s</pre>\n' \
+    printf '<h2>Start here - top prioritized findings</h2><pre>%s</pre>\n' \
       "$( _top_findings 25 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' | awk 'NF' || echo '(none)')"
     if [[ "${DIFF_HAD_PRIOR:-0}" == 1 ]]; then
-      _section "⚡ New since last run" "$OUTDIR/new.txt"
+      _section "New since last run" "$OUTDIR/new.txt"
     fi
     _section "Vulnerability signals" "$OUTDIR/vulns.txt"
     _section "Secrets (review manually)" "$OUTDIR/secrets.txt"

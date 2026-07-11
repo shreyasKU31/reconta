@@ -59,7 +59,7 @@ module_javascript() {
 
   uniq_sort "$secrets"
   if [[ -s "$secrets" ]]; then
-    log_ok "⚠ Potential secrets found: $(count "$secrets") — review $secrets"
+    log_ok "Potential secrets found: $(count "$secrets") - review $secrets"
   else
     log_ok "No secrets surfaced in JS"
   fi

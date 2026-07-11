@@ -1,4 +1,4 @@
-name: 🐛 Bug report
+name: Bug report
 description: Something in Reconta isn't working as expected
 title: "[bug]: "
 labels: ["bug"]

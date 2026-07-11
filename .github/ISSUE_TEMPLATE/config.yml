@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 🔐 Report a security vulnerability
+  - name: Report a security vulnerability
     url: https://github.com/<you>/reconta/security/advisories/new
     about: Please report security issues privately, not as public issues. See SECURITY.md.
-  - name: 💬 Questions & discussion
+  - name: Questions and discussion
     url: https://github.com/<you>/reconta/discussions
     about: Ask questions, share recon recipes, and discuss ideas here.
