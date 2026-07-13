@@ -7,6 +7,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Active vulnerability hunting stage (`modules/fuzz.sh`): tests the collected
+  parameterised URLs and hosts for real bugs and appends confirmed findings to
+  `vulns.txt` (severity-tagged, so they also top `interesting.txt`). Covers XSS
+  (dalfox + nuclei DAST), SQL injection (nuclei DAST, plus sqlmap in deep),
+  SSRF/blind bugs via out-of-band interactsh, open redirect and CORS
+  misconfiguration (built-in canary checks), CRLF injection (crlfuzz, deep), and
+  SSTI/LFI/path traversal via nuclei fuzzing templates. Runs only in the normal
+  and deep profiles; disable with `--no-fuzz`. Adds `dalfox`, `crlfuzz`,
+  `sqlmap`, `qsreplace`, and `interactsh-client` to the installer and Docker.
 - Custom wordlist engine (`modules/wordlist.sh`): builds target-specific
   `directories`, `usernames`, `passwords`, and `subdomains` wordlists from the
   target's own data (CeWL site vocabulary, URL path tokens, technology names,

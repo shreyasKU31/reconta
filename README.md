@@ -75,7 +75,9 @@ subdomains -> resolve (keep only names that resolve and hosts that are live)
                             |
                     wordlist (build target-specific lists from the data above)
                             |
-                          vulns (nuclei, subzy)
+                          vulns (nuclei templates, subdomain takeover)
+                            |
+                          fuzz  (active bug hunting: DAST, XSS, redirect, CORS, CRLF, SQLi)
                             |
              analyze (score and rank) -> diff (find what is new) -> report
 ```
@@ -104,6 +106,33 @@ output/example.com/
   wordlists/        Target-specific wordlists (see below).
   .raw/             Every intermediate file, grouped by stage.
 ```
+
+## Finding bugs, not just assets
+
+Recon tells you where to look. Reconta also tests those places for real,
+exploitable bugs and writes each confirmed finding into `vulns.txt`, sorted by
+severity, where it also rises to the top of `interesting.txt`.
+
+The active hunting stage takes the parameterised URLs and live hosts Reconta
+found and runs proven detection for the bug classes that matter in the real
+world:
+
+| Bug class | How Reconta tests it | Tool |
+|---|---|---|
+| XSS (reflected/DOM) | fuzzes parameters with XSS payloads | dalfox, nuclei DAST |
+| SQL injection | parameter fuzzing, plus confirmation in deep | nuclei DAST, sqlmap |
+| SSRF and blind bugs | out-of-band callbacks (interactsh) | nuclei DAST |
+| Open redirect | sets redirect params to a canary and checks the 3xx | built-in check |
+| CORS misconfiguration | reflects an arbitrary Origin with credentials | built-in check |
+| CRLF / response splitting | header-injection payloads (deep) | crlfuzz |
+| SSTI, LFI, path traversal | template and parameter fuzzing | nuclei DAST |
+| Subdomain takeover | dangling-record fingerprints | subzy, nuclei |
+| Known CVEs and misconfigs | tech-matched templates | nuclei |
+
+This stage sends payloads to the target, so it only runs in the `normal` and
+`deep` profiles. Turn it off with `--no-fuzz`. In `normal` it runs the fast,
+high-signal checks; in `deep` it adds crlfuzz and sqlmap and tests far more URLs.
+Only run it against targets you are authorized to test.
 
 ## Custom wordlists
 
@@ -202,7 +231,8 @@ warning, skips that step, and continues.
 subfinder, amass, assetfinder, crt.sh, findomain, puredns, alterx, dnsx, httpx,
 naabu, nmap, gau, waybackurls, katana, uro, subjs, trufflehog, mantra, arjun,
 paramspider, asnmap, theHarvester, whois, nuclei, subzy, anew, jq, notify,
-gowitness, cewl, ffuf, gobuster, pdftotext (poppler-utils).
+gowitness, cewl, ffuf, gobuster, pdftotext (poppler-utils), dalfox, crlfuzz,
+sqlmap, qsreplace, interactsh-client.
 
 ## Usage
 
@@ -221,6 +251,7 @@ gowitness, cewl, ffuf, gobuster, pdftotext (poppler-utils).
 | `-c, --config FILE`| Use a different config file |
 | `--no-ports`       | Skip port scanning |
 | `--no-vulns`       | Skip the nuclei and takeover checks |
+| `--no-fuzz`        | Skip active bug hunting (XSS, SQLi, redirect, CORS, …) |
 | `--no-diff`        | Skip change detection |
 | `-m, --monitor`    | Send an alert (through `notify`) when new assets appear |
 | `--list-tools`     | Show which tools are installed |
@@ -228,12 +259,14 @@ gowitness, cewl, ffuf, gobuster, pdftotext (poppler-utils).
 
 ### Profiles
 
-- **quick** runs passive sources only. No brute force, no port scan. Fastest, and
-  the least intrusive way to start.
-- **normal** is the recommended default. Passive sources plus light active checks,
-  the top 100 ports, and a standard nuclei scan.
+- **quick** runs passive sources only. No brute force, no port scan, no active
+  bug hunting. Fastest, and the least intrusive way to start.
+- **normal** is the recommended default. Passive sources plus light active
+  checks, the top 100 ports, a standard nuclei scan, and the fast active bug
+  checks (XSS, open redirect, CORS, DAST fuzzing).
 - **deep** does the most: subdomain brute force, a full port scan, deeper
-  crawling, and all severity levels.
+  crawling, all severity levels, ffuf content discovery, and the full active
+  hunt including crlfuzz and sqlmap across far more URLs.
 
 ### Continuous monitoring
 

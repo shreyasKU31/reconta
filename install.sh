@@ -45,7 +45,7 @@ if [[ "$GO_ONLY" == 0 ]] && have_tool apt-get; then
 
   # Install one package at a time. This way a single unavailable or broken
   # package can't stop the others, and you can see exactly which one failed.
-  apt_pkgs="jq curl whois nmap masscan python3-pip pipx git libpcap-dev cewl poppler-utils"
+  apt_pkgs="jq curl whois nmap masscan python3-pip pipx git libpcap-dev cewl poppler-utils sqlmap"
   apt_failed=""
   for p in $apt_pkgs; do
     printf '  %-16s ' "$p"
@@ -96,6 +96,10 @@ declare -A GO_TOOLS=(
   [gowitness]="github.com/sensepost/gowitness@latest"
   [ffuf]="github.com/ffuf/ffuf/v2@latest"
   [gobuster]="github.com/OJ/gobuster/v3@latest"
+  [dalfox]="github.com/hahwul/dalfox/v2@latest"
+  [crlfuzz]="github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest"
+  [qsreplace]="github.com/tomnomnom/qsreplace@latest"
+  [interactsh-client]="github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest"
 )
 for bin in "${!GO_TOOLS[@]}"; do
   if command -v "$bin" >/dev/null 2>&1; then

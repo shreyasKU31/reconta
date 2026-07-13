@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # System dependencies (nmap/masscan/whois/jq/pipx + libpcap for naabu).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git curl jq whois nmap masscan dnsutils \
-      python3 python3-pip pipx libpcap-dev cewl poppler-utils \
+      python3 python3-pip pipx libpcap-dev cewl poppler-utils sqlmap \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/reconta

@@ -56,6 +56,7 @@ Options:
   -p, --profile P     quick | normal | deep         (default: from config)
   -c, --config FILE   Config file                   (default: config/reconta.conf)
       --no-vulns      Skip the nuclei/takeover stage
+      --no-fuzz       Skip active bug hunting (XSS/SQLi/redirect/CORS/…)
       --no-ports      Skip port scanning
       --no-diff       Skip change detection vs previous run
   -m, --monitor       Notify (via 'notify') when new assets appear vs last run
@@ -85,6 +86,7 @@ while [[ $# -gt 0 ]]; do
     -p|--profile) PROFILE_OVERRIDE="$2"; shift 2 ;;
     -c|--config)  CONFIG="$2"; shift 2 ;;
     --no-vulns)   NO_VULNS=1; shift ;;
+    --no-fuzz)    NO_FUZZ=1; shift ;;
     --no-ports)   NO_PORTS=1; shift ;;
     --no-diff)    NO_DIFF=1; shift ;;
     -m|--monitor) MONITOR=1; shift ;;
@@ -106,6 +108,7 @@ else
 fi
 [[ -n "$PROFILE_OVERRIDE" ]] && PROFILE="$PROFILE_OVERRIDE"
 [[ "${NO_VULNS:-0}" == 1 ]] && ENABLE_VULNS=0
+[[ "${NO_FUZZ:-0}" == 1 ]] && ENABLE_FUZZ=0
 [[ "${NO_PORTS:-0}" == 1 ]] && ENABLE_PORTS=0
 [[ "${NO_DIFF:-0}" == 1 ]] && ENABLE_DIFF=0
 [[ "${MONITOR:-0}" == 1 ]] && NOTIFY=1   # monitoring implies notify on new
@@ -113,7 +116,8 @@ fi
 # --- --list-tools mode ------------------------------------------------------
 CORE_TOOLS=(subfinder assetfinder amass dnsx httpx naabu nmap gau waybackurls
             katana uro anew jq arjun paramspider asnmap theHarvester whois
-            nuclei subzy trufflehog subjs curl ffuf gobuster cewl pdftotext)
+            nuclei subzy trufflehog subjs curl ffuf gobuster cewl pdftotext
+            dalfox crlfuzz sqlmap qsreplace)
 if [[ "${LIST_TOOLS:-0}" == 1 ]]; then
   printf '%sReconta tool status%s\n\n' "$C_BOLD" "$C_RESET"
   for t in "${CORE_TOOLS[@]}"; do
@@ -156,7 +160,7 @@ BANNER
 export TARGET PROFILE THREADS RESOLVER_THREADS RATE_LIMIT HTTP_TIMEOUT
 export ENABLE_PASSIVE_SUBS ENABLE_ACTIVE_SUBS ENABLE_PORTS ENABLE_URLS \
        ENABLE_JS ENABLE_PARAMS ENABLE_OSINT ENABLE_VULNS ENABLE_SCREENSHOTS \
-       ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON ENABLE_WORDLIST
+       ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON ENABLE_WORDLIST ENABLE_FUZZ
 export NAABU_TOP_PORTS NUCLEI_SEVERITY NUCLEI_RATE NOTIFY MONITOR
 export DNS_WORDLIST RESOLVERS PERM_WORDLIST SIGNATURES STATE_DIR
 export CEWL_DEPTH CEWL_MIN WORDLIST_MINLEN WORDLIST_YEARS WORDLIST_FFUF
@@ -183,8 +187,9 @@ export D_RAW="$OUTDIR/.raw"
 export D_SUBS="$D_RAW/subdomains"  D_PORTS="$D_RAW/ports"  D_URLS="$D_RAW/urls"
 export D_JS="$D_RAW/js"  D_PARAMS="$D_RAW/params"  D_OSINT="$D_RAW/osint"
 export D_VULNS="$D_RAW/vulns"  D_ANALYZE="$D_RAW/analyze"  D_WORDLIST="$D_RAW/wordlist"
+export D_FUZZ="$D_RAW/fuzz"
 mkdir -p "$D_SUBS" "$D_PORTS" "$D_URLS" "$D_JS" "$D_PARAMS" "$D_OSINT" \
-         "$D_VULNS" "$D_ANALYZE" "$D_WORDLIST"
+         "$D_VULNS" "$D_ANALYZE" "$D_WORDLIST" "$D_FUZZ"
 
 RUN_START=$(date +%s); export RUN_START
 
@@ -193,7 +198,7 @@ exec > >(tee -a "$OUTDIR/reconta.log") 2>&1
 
 # --- Load modules -----------------------------------------------------------
 for m in subdomains resolve osint ports urls javascript params vulns \
-         wordlist analyze diff report; do
+         wordlist fuzz analyze diff report; do
   # shellcheck source=/dev/null
   source "$RECONTA_HOME/modules/$m.sh"
 done
@@ -229,6 +234,7 @@ module_params
 module_wordlist
 
 module_vulns
+module_fuzz      # active bug hunting → findings appended to vulns.txt
 
 # Post-processing: extract signal, detect change, then report.
 module_analyze   # score & rank everything → interesting.txt
