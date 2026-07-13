@@ -161,7 +161,7 @@ export TARGET PROFILE THREADS RESOLVER_THREADS RATE_LIMIT HTTP_TIMEOUT
 export ENABLE_PASSIVE_SUBS ENABLE_ACTIVE_SUBS ENABLE_PORTS ENABLE_URLS \
        ENABLE_JS ENABLE_PARAMS ENABLE_OSINT ENABLE_VULNS ENABLE_SCREENSHOTS \
        ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON ENABLE_WORDLIST ENABLE_FUZZ \
-       ENABLE_POC ENABLE_MSF_NOTES
+       ENABLE_POC ENABLE_MSF_NOTES ENABLE_CHAINS
 export NAABU_TOP_PORTS NUCLEI_SEVERITY NUCLEI_RATE NOTIFY MONITOR
 export DNS_WORDLIST RESOLVERS PERM_WORDLIST SIGNATURES STATE_DIR
 export CEWL_DEPTH CEWL_MIN WORDLIST_MINLEN WORDLIST_YEARS WORDLIST_FFUF
@@ -199,7 +199,7 @@ exec > >(tee -a "$OUTDIR/reconta.log") 2>&1
 
 # --- Load modules -----------------------------------------------------------
 for m in subdomains resolve osint ports urls javascript params vulns \
-         wordlist fuzz verify analyze diff report; do
+         wordlist fuzz verify analyze chains diff report; do
   # shellcheck source=/dev/null
   source "$RECONTA_HOME/modules/$m.sh"
 done
@@ -238,8 +238,9 @@ module_vulns
 module_fuzz      # active bug hunting → findings appended to vulns.txt
 module_verify    # safe reproductions for each finding → poc.txt
 
-# Post-processing: extract signal, detect change, then report.
+# Post-processing: extract signal, correlate, detect change, then report.
 module_analyze   # score & rank everything → interesting.txt
+module_chains    # correlate findings into attack chains → chains.txt
 module_diff      # compare against previous run → new.txt
 module_report
 

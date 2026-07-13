@@ -7,6 +7,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Attack-chain correlation (`modules/chains.sh`): reads all findings and
+  correlates them into high-impact chains in `chains.txt` (OAuth token theft via
+  open redirect, CORS data theft, leaked key against the API, SSRF to cloud
+  metadata, source disclosure to credentials, XSS to session takeover, subdomain
+  takeover, admin panel with default login). Pure correlation with evidence,
+  impact, and manual-verify steps — no exploitation.
+- Tech-stack CVE detection (`modules/vulns.sh`): fingerprints each host's
+  technologies into `techstack.txt` and runs nuclei's automatic scan so
+  stack-specific CVE templates fire against the detected technologies.
 - Proof-of-concept stage (`modules/verify.sh`): for each confirmed finding it
   writes a safe, non-destructive, report-ready reproduction to `poc.txt` (the
   exact payload/command, an impact line, and a reminder to confirm in scope).

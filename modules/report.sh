@@ -29,6 +29,8 @@ module_report() {
   n_interesting=$(awk -F'\t' 'NF>=3{c++} END{print c+0}' "$D_ANALYZE/ranked.tsv" 2>/dev/null)
   n_interesting=${n_interesting:-0}
   n_new="${DIFF_TOTAL_NEW:-0}"
+  local n_chains; n_chains=$(grep -c '^## \[' "$OUTDIR/chains.txt" 2>/dev/null)
+  n_chains=${n_chains:-0}
   local wl="$OUTDIR/wordlists" n_wl_dirs n_wl_users n_wl_pass n_wl_subs
   n_wl_dirs=$(count "$wl/directories.txt")
   n_wl_users=$(count "$wl/usernames.txt")
@@ -61,6 +63,7 @@ module_report() {
     echo "| JavaScript files | $n_js |"
     echo "| **Secrets (review!)** | $n_secrets |"
     echo "| **Vuln signals** | $n_vulns (crit: $n_crit, high: $n_high) |"
+    echo "| **Attack chains** | $n_chains |"
     echo "| **Prioritized findings** | $n_interesting |"
     echo "| **New since last run** | $n_new |"
     echo
@@ -91,8 +94,19 @@ module_report() {
     echo '```'; _head_or_none "$OUTDIR/hosts.txt" 40; echo '```'; echo
     echo "## Open ports/services"
     echo '```'; _head_or_none "$OUTDIR/ports.txt" 40; echo '```'; echo
+    if [[ -s "$OUTDIR/chains.txt" ]]; then
+      echo "## Attack chains (highest impact — start here)"
+      echo
+      echo "Combinations of findings that add up to real impact. Verify each in scope."
+      echo
+      echo '```'; grep -vE '^#' "$OUTDIR/chains.txt" | awk 'NF' | head -n 50; echo '```'; echo
+    fi
     echo "## Vulnerability signals"
     echo '```'; _head_or_none "$OUTDIR/vulns.txt" 40; echo '```'; echo
+    if [[ -s "$OUTDIR/techstack.txt" ]]; then
+      echo "## Technology stack"
+      echo '```'; _head_or_none "$OUTDIR/techstack.txt" 30; echo '```'; echo
+    fi
     if [[ -s "$OUTDIR/poc.txt" ]]; then
       echo "## How to reproduce (safe proof-of-concept)"
       echo
@@ -121,7 +135,7 @@ module_report() {
     echo
     echo "All results live under \`$OUTDIR/\`:"
     echo
-    for f in interesting new subdomains hosts ports urls params js secrets osint vulns poc; do
+    for f in interesting new chains subdomains hosts ports urls params js secrets osint techstack vulns poc; do
       [[ -f "$OUTDIR/$f.txt" ]] && echo "- \`$f.txt\` — $(count "$OUTDIR/$f.txt") lines"
     done
     [[ -f "$OUTDIR/report.json" ]] && echo "- \`report.json\` — machine-readable summary"
@@ -162,6 +176,7 @@ footer{color:var(--muted);font-size:12px;margin-top:40px;border-top:1px solid va
 <div class="meta">$(date -u +'%Y-%m-%d %H:%M UTC') · profile: $PROFILE · duration: $(elapsed "$RUN_START")</div>
 <div class="grid">
 HTMLHEAD
+    _card "Attack chains" "$n_chains" danger
     _card "Prioritized" "$n_interesting" danger
     _card "New this run" "$n_new" danger
     _card "Subdomains" "$n_subs"
@@ -180,6 +195,7 @@ HTMLHEAD
     if [[ "${DIFF_HAD_PRIOR:-0}" == 1 ]]; then
       _section "New since last run" "$OUTDIR/new.txt"
     fi
+    [[ -s "$OUTDIR/chains.txt" ]] && _section "Attack chains (highest impact)" "$OUTDIR/chains.txt"
     _section "Vulnerability signals" "$OUTDIR/vulns.txt"
     _section "Secrets (review manually)" "$OUTDIR/secrets.txt"
     _section "Live hosts" "$OUTDIR/hosts.txt"

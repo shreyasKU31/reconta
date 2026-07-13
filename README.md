@@ -104,6 +104,8 @@ output/example.com/
   report.md         The same report in Markdown.
   report.json       A machine-readable summary.
   poc.txt           Safe, report-ready reproduction for each finding.
+  chains.txt        High-impact attack chains correlated from the findings.
+  techstack.txt     Technologies fingerprinted across the target.
   wordlists/        Target-specific wordlists (see below).
   .raw/             Every intermediate file, grouped by stage.
 ```
@@ -129,6 +131,30 @@ world:
 | SSTI, LFI, path traversal | template and parameter fuzzing | nuclei DAST |
 | Subdomain takeover | dangling-record fingerprints | subzy, nuclei |
 | Known CVEs and misconfigs | tech-matched templates | nuclei |
+| Stack-specific CVEs | fingerprints the tech, runs matching CVE templates | nuclei automatic scan |
+
+### Attack chains, not single bugs
+
+A lone open redirect is a low reward. The same open redirect on the OAuth flow is
+account takeover. Reconta reads every finding it made and correlates them into
+high-impact chains in `chains.txt` — the kind of reasoning that earns real
+bounties and that scanners miss because they test bugs one at a time.
+
+```
+## [critical] CHAIN 1: OAuth token theft via open redirect
+Components:
+  - open redirect: https://target.com/login?redirect_uri=/home
+  - auth flow endpoint: https://target.com/oauth/authorize?redirect_uri=/x
+Impact : Redirect on the OAuth flow can leak the auth code/token, leading to account takeover.
+Verify : Set redirect_uri to your host in the auth flow and check whether the code is delivered to it.
+```
+
+Chains it looks for include: OAuth token theft via open redirect, cross-origin
+data theft via CORS, a leaked key against the discovered API, SSRF to cloud
+metadata credentials, source/secret disclosure to credential access, XSS to
+session takeover, subdomain takeover to cookie theft, and exposed admin panels
+with default logins. This stage is pure correlation — it lists the evidence, the
+impact, and the manual steps to confirm. You verify and submit.
 
 This stage sends payloads to the target, so it only runs in the `normal` and
 `deep` profiles. Turn it off with `--no-fuzz`. In `normal` it runs the fast,

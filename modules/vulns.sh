@@ -17,6 +17,20 @@ module_vulns() {
 
   if [[ ! -s "$hosts" ]]; then log_warn "no live hosts to test"; return 0; fi
 
+  # -- Technology stack inventory --------------------------------------------
+  # Build a per-target technology list from httpx fingerprints. This drives the
+  # stack-specific CVE scan below and gives you a clear "what is it running" view.
+  local techstack="$OUTDIR/techstack.txt"
+  if [[ -s "$D_SUBS/httpx.jsonl" ]] && have_tool jq; then
+    jq -r '. as $r | (.tech // [])[]? | "\(.)\t\($r.url)"' "$D_SUBS/httpx.jsonl" 2>/dev/null \
+      | sort -u > "$D_VULNS/tech-hosts.tsv" || true
+    # Summarise: "technology  (N hosts)" so you see the stack at a glance.
+    cut -f1 "$D_VULNS/tech-hosts.tsv" 2>/dev/null | sort | uniq -c | sort -rn \
+      | awk '{c=$1; $1=""; sub(/^ /,""); printf "%-30s %s host(s)\n", $0, c}' \
+      > "$techstack" || true
+    [[ -s "$techstack" ]] && log_result "technologies fingerprinted: $(count "$techstack")"
+  fi
+
   # -- Subdomain takeover -----------------------------------------------------
   if have_tool subzy && [[ -s "$resolved" ]]; then
     log_info "checking subdomain takeover (subzy)…"
@@ -50,6 +64,23 @@ module_vulns() {
     if [[ -s "$D_VULNS/nuclei.jsonl" ]] && have_tool jq; then
       jq -r '"[\(.info.severity)] \(.["template-id"]) — \(.matched-at // .host)"' \
         "$D_VULNS/nuclei.jsonl" 2>/dev/null | anew -q "$out" >/dev/null || true
+    fi
+
+    # -- Tech-stack-driven CVE scan (normal/deep) ----------------------------
+    # nuclei's automatic scan fingerprints each host's technologies and runs the
+    # CVE/vuln templates that match that exact stack — this is how you surface
+    # CVEs tied to the detected tech rather than a generic sweep.
+    if [[ "$PROFILE" != quick ]]; then
+      log_info "tech-stack CVE scan (nuclei automatic scan)…"
+      capped 1200 nuclei -l "$hosts" -as \
+             -rate-limit "$NUCLEI_RATE" -c "$THREADS" \
+             -silent -no-color \
+             -jsonl -o "$D_VULNS/nuclei-tech.jsonl" >/dev/null 2>&1 || true
+      if [[ -s "$D_VULNS/nuclei-tech.jsonl" ]] && have_tool jq; then
+        jq -r '"[\(.info.severity)] cve:\(.["template-id"]) — \(.matched-at // .host)"' \
+          "$D_VULNS/nuclei-tech.jsonl" 2>/dev/null | anew -q "$out" >/dev/null || true
+        log_result "stack-specific findings: $(count "$D_VULNS/nuclei-tech.jsonl")"
+      fi
     fi
   fi
 
