@@ -7,6 +7,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Proof-of-concept stage (`modules/verify.sh`): for each confirmed finding it
+  writes a safe, non-destructive, report-ready reproduction to `poc.txt` (the
+  exact payload/command, an impact line, and a reminder to confirm in scope).
+  Deliberately stops at proof-of-concept — it does not exploit, gain access, or
+  exfiltrate data. An opt-in, default-off `ENABLE_MSF_NOTES` writes an
+  informational CVE/service list (`exploitation-notes.txt`) for manual research
+  only; it never executes anything.
 - Active vulnerability hunting stage (`modules/fuzz.sh`): tests the collected
   parameterised URLs and hosts for real bugs and appends confirmed findings to
   `vulns.txt` (severity-tagged, so they also top `interesting.txt`). Covers XSS

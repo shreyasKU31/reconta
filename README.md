@@ -103,6 +103,7 @@ output/example.com/
   report.html       A dashboard you can open in a browser.
   report.md         The same report in Markdown.
   report.json       A machine-readable summary.
+  poc.txt           Safe, report-ready reproduction for each finding.
   wordlists/        Target-specific wordlists (see below).
   .raw/             Every intermediate file, grouped by stage.
 ```
@@ -133,6 +134,26 @@ This stage sends payloads to the target, so it only runs in the `normal` and
 `deep` profiles. Turn it off with `--no-fuzz`. In `normal` it runs the fast,
 high-signal checks; in `deep` it adds crlfuzz and sqlmap and tests far more URLs.
 Only run it against targets you are authorized to test.
+
+### From finding to report
+
+For every confirmed finding, Reconta writes a ready-to-run reproduction to
+`poc.txt`: the exact payload or command, a one-line impact statement, and a
+reminder to confirm it yourself. This is the part that saves time on a bounty,
+turning a raw finding into report-ready evidence in seconds.
+
+```
+## [medium] open-redirect
+Target : https://target.com/go?next=/home
+Impact : Redirects users to an attacker site; aids phishing and OAuth token theft.
+Repro  : curl -skI "https://target.com/go?next=/home" | grep -i '^location:'
+```
+
+Reconta stops at proof-of-concept by design. It does not exploit, gain access, or
+exfiltrate data, because that is what bug-bounty rules require and where
+responsible testing ends. The reproductions are read-only checks (reflection,
+headers, boolean PoC) for you to run and verify. Nuclei is used the same way:
+to find and safely prove issues, not to weaponize them.
 
 ## Custom wordlists
 

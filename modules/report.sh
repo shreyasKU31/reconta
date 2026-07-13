@@ -93,6 +93,13 @@ module_report() {
     echo '```'; _head_or_none "$OUTDIR/ports.txt" 40; echo '```'; echo
     echo "## Vulnerability signals"
     echo '```'; _head_or_none "$OUTDIR/vulns.txt" 40; echo '```'; echo
+    if [[ -s "$OUTDIR/poc.txt" ]]; then
+      echo "## How to reproduce (safe proof-of-concept)"
+      echo
+      echo "Ready-to-run, non-destructive checks. Confirm each yourself and stay in scope."
+      echo
+      echo '```'; grep -vE '^#' "$OUTDIR/poc.txt" | awk 'NF' | head -n 45; echo '```'; echo
+    fi
     echo "## OSINT"
     echo '```'; _head_or_none "$OUTDIR/osint.txt" 40; echo '```'; echo
 
@@ -114,7 +121,7 @@ module_report() {
     echo
     echo "All results live under \`$OUTDIR/\`:"
     echo
-    for f in interesting new subdomains hosts ports urls params js secrets osint vulns; do
+    for f in interesting new subdomains hosts ports urls params js secrets osint vulns poc; do
       [[ -f "$OUTDIR/$f.txt" ]] && echo "- \`$f.txt\` — $(count "$OUTDIR/$f.txt") lines"
     done
     [[ -f "$OUTDIR/report.json" ]] && echo "- \`report.json\` — machine-readable summary"
