@@ -34,7 +34,7 @@ module_vulns() {
   # -- Subdomain takeover -----------------------------------------------------
   if have_tool subzy && [[ -s "$resolved" ]]; then
     log_info "checking subdomain takeover (subzy)…"
-    subzy run --targets "$resolved" --hide_fails --concurrency "$THREADS" \
+    capped 600 subzy run --targets "$resolved" --hide_fails --concurrency "$THREADS" \
       2>/dev/null | grep -iE 'VULNERABLE|takeover' \
       | anew -q "$out" >/dev/null 2>&1 || true
   fi
@@ -54,7 +54,7 @@ module_vulns() {
       scan_input="$D_VULNS/targets.txt"
     fi
 
-    nuclei -l "$scan_input" \
+    capped "${NUCLEI_TIMEOUT:-2400}" nuclei -l "$scan_input" \
            -severity "$sev" \
            -rate-limit "$NUCLEI_RATE" -c "$THREADS" \
            -silent -no-color -stats \

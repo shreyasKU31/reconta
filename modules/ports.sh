@@ -24,7 +24,7 @@ module_ports() {
   esac
 
   log_info "naabu scan (${PROFILE} profile)…"
-  naabu -l "$resolved" "${port_args[@]}" -rate "$RATE_LIMIT" -silent \
+  capped "${NAABU_TIMEOUT:-1200}" naabu -l "$resolved" "${port_args[@]}" -rate "$RATE_LIMIT" -silent \
         -o "$naabu_out" >/dev/null 2>&1 || true
   log_result "$(count "$naabu_out") open host:port pairs"
 

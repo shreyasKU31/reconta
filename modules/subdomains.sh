@@ -16,7 +16,7 @@ module_subdomains() {
     local pids=()
     (
       require_tool subfinder "subfinder" &&
-        subfinder -d "$TARGET" -all -silent -o "$tmp/subfinder.txt" >/dev/null 2>&1
+        capped "${SUBFINDER_TIMEOUT:-240}" subfinder -d "$TARGET" -all -silent -o "$tmp/subfinder.txt" >/dev/null 2>&1
     ) & pids+=($!)
     (
       require_tool assetfinder "assetfinder" &&

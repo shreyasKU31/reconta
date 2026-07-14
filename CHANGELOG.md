@@ -6,7 +6,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Every external tool now runs under a configurable wall-clock cap, so one hang
+  can no longer stall the scan. In particular `asnmap` (which could run for
+  hours) is capped, and the main `nuclei`, `dnsx`, `httpx`, `naabu`, `subzy`,
+  `subfinder`, and `gau`/`waybackurls` invocations are now bounded. Timeouts are
+  set in `config/reconta.conf` (`ASNMAP_TIMEOUT`, `NUCLEI_TIMEOUT`, etc.).
+- The OSINT stage now runs its tools in parallel and assembles the results, so a
+  slow tool no longer blocks the rest of the stage.
+
 ### Added
+- Web-security methodology checks (`modules/websec.sh`): fast, parallel, capped
+  checks for GraphQL introspection, dangerous HTTP methods (PUT/DELETE/TRACE),
+  null-origin CORS, and missing clickjacking protection, plus a DNS zone-transfer
+  (AXFR) check in the OSINT stage. Findings flow into `vulns.txt`, the chains,
+  and the report.
 - Attack-chain correlation (`modules/chains.sh`): reads all findings and
   correlates them into high-impact chains in `chains.txt` (OAuth token theft via
   open redirect, CORS data theft, leaked key against the API, SSRF to cloud

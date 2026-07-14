@@ -45,7 +45,7 @@ if [[ "$GO_ONLY" == 0 ]] && have_tool apt-get; then
 
   # Install one package at a time. This way a single unavailable or broken
   # package can't stop the others, and you can see exactly which one failed.
-  apt_pkgs="jq curl whois nmap masscan python3-pip pipx git libpcap-dev cewl poppler-utils sqlmap"
+  apt_pkgs="jq curl whois nmap masscan dnsutils python3-pip pipx git libpcap-dev cewl poppler-utils sqlmap"
   apt_failed=""
   for p in $apt_pkgs; do
     printf '  %-16s ' "$p"

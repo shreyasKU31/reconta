@@ -64,23 +64,37 @@ your changes improve every future scan.
 ## How it works
 
 Each stage uses the cleaned output of the stage before it, so noise is removed as
-early as possible.
+early as possible. After the live surface is known, the independent stages
+(ports, URLs, OSINT) run in parallel, and every external tool has a hard
+wall-clock cap, so one slow or stuck tool can never stall the whole scan.
 
 ```
 subdomains -> resolve (keep only names that resolve and hosts that are live)
+                |
+        [ run in parallel ]
                 |-> ports    (naabu, then nmap for service and version detail)
                 |-> urls     (gau, waybackurls, katana; uro removes duplicates; httpx keeps live URLs)
                 |     |-> javascript (find JS files and scan them for secrets) -> params
-                |-> osint    (asnmap, whois, theHarvester)
+                |-> osint    (asnmap, whois, theHarvester, zone transfer)  [each tool capped]
                             |
                     wordlist (build target-specific lists from the data above)
                             |
-                          vulns (nuclei templates, subdomain takeover)
+                          vulns (nuclei templates + tech-stack CVE scan, takeover)
+                            |
+                          websec (graphql, HTTP methods, CORS, clickjacking)
                             |
                           fuzz  (active bug hunting: DAST, XSS, redirect, CORS, CRLF, SQLi)
                             |
-             analyze (score and rank) -> diff (find what is new) -> report
+             analyze (score and rank) -> chains (correlate) -> diff -> report
 ```
+
+### Reliability
+
+Every external tool runs under a wall-clock cap (configurable in
+`config/reconta.conf`, for example `ASNMAP_TIMEOUT` and `NUCLEI_TIMEOUT`). If a
+tool hangs, its cap kills it and the scan continues with whatever it produced.
+The stages that do not depend on each other run at the same time, so a slow tool
+in one stage does not hold up the others.
 
 ## Output files
 
@@ -132,6 +146,10 @@ world:
 | Subdomain takeover | dangling-record fingerprints | subzy, nuclei |
 | Known CVEs and misconfigs | tech-matched templates | nuclei |
 | Stack-specific CVEs | fingerprints the tech, runs matching CVE templates | nuclei automatic scan |
+| GraphQL introspection | queries the schema endpoint | built-in |
+| Dangerous HTTP methods | OPTIONS check for PUT/DELETE/TRACE | built-in |
+| Clickjacking | missing X-Frame-Options / CSP frame-ancestors | built-in |
+| DNS zone transfer | AXFR against the target's name servers | dig |
 
 ### Attack chains, not single bugs
 

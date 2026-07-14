@@ -23,7 +23,7 @@ module_resolve() {
   # -- DNS resolution: drop names that don't resolve (wildcard-filtered) ------
   if require_tool dnsx "DNS resolution"; then
     local rflag=(); [[ -s "$RESOLVERS" ]] && rflag=(-r "$RESOLVERS")
-    dnsx -l "$raw" "${rflag[@]}" -t "$RESOLVER_THREADS" -silent \
+    capped "${DNSX_TIMEOUT:-600}" dnsx -l "$raw" "${rflag[@]}" -t "$RESOLVER_THREADS" -silent \
          -o "$resolved" >/dev/null 2>&1 || true
     log_result "$(count "$raw") candidates → $(count "$resolved") resolve in DNS"
   else
@@ -34,7 +34,7 @@ module_resolve() {
 
   # -- HTTP liveness + fingerprint: the actual attack surface -----------------
   if require_tool httpx "HTTP probing"; then
-    httpx -l "$resolved" \
+    capped "${HTTPX_TIMEOUT:-900}" httpx -l "$resolved" \
           -threads "$THREADS" -rate-limit "$RATE_LIMIT" -timeout "$HTTP_TIMEOUT" \
           -silent -no-color \
           -status-code -title -tech-detect -web-server -cdn -follow-redirects \

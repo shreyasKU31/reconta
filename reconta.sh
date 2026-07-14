@@ -161,10 +161,12 @@ export TARGET PROFILE THREADS RESOLVER_THREADS RATE_LIMIT HTTP_TIMEOUT
 export ENABLE_PASSIVE_SUBS ENABLE_ACTIVE_SUBS ENABLE_PORTS ENABLE_URLS \
        ENABLE_JS ENABLE_PARAMS ENABLE_OSINT ENABLE_VULNS ENABLE_SCREENSHOTS \
        ENABLE_ANALYZE ENABLE_DIFF ENABLE_JSON ENABLE_WORDLIST ENABLE_FUZZ \
-       ENABLE_POC ENABLE_MSF_NOTES ENABLE_CHAINS
+       ENABLE_POC ENABLE_MSF_NOTES ENABLE_CHAINS ENABLE_WEBSEC
 export NAABU_TOP_PORTS NUCLEI_SEVERITY NUCLEI_RATE NOTIFY MONITOR
 export DNS_WORDLIST RESOLVERS PERM_WORDLIST SIGNATURES STATE_DIR
 export CEWL_DEPTH CEWL_MIN WORDLIST_MINLEN WORDLIST_YEARS WORDLIST_FFUF
+export ASNMAP_TIMEOUT WHOIS_TIMEOUT DNSX_TIMEOUT HARVESTER_TIMEOUT \
+       SUBFINDER_TIMEOUT HTTPX_TIMEOUT NAABU_TIMEOUT NUCLEI_TIMEOUT GAU_TIMEOUT
 
 # Everything for a target lives inside one directory named after the target.
 # Reuse it if it already exists (so re-scans build on the same folder),
@@ -188,9 +190,9 @@ export D_RAW="$OUTDIR/.raw"
 export D_SUBS="$D_RAW/subdomains"  D_PORTS="$D_RAW/ports"  D_URLS="$D_RAW/urls"
 export D_JS="$D_RAW/js"  D_PARAMS="$D_RAW/params"  D_OSINT="$D_RAW/osint"
 export D_VULNS="$D_RAW/vulns"  D_ANALYZE="$D_RAW/analyze"  D_WORDLIST="$D_RAW/wordlist"
-export D_FUZZ="$D_RAW/fuzz"
+export D_FUZZ="$D_RAW/fuzz"  D_WEBSEC="$D_RAW/websec"
 mkdir -p "$D_SUBS" "$D_PORTS" "$D_URLS" "$D_JS" "$D_PARAMS" "$D_OSINT" \
-         "$D_VULNS" "$D_ANALYZE" "$D_WORDLIST" "$D_FUZZ"
+         "$D_VULNS" "$D_ANALYZE" "$D_WORDLIST" "$D_FUZZ" "$D_WEBSEC"
 
 RUN_START=$(date +%s); export RUN_START
 
@@ -199,7 +201,7 @@ exec > >(tee -a "$OUTDIR/reconta.log") 2>&1
 
 # --- Load modules -----------------------------------------------------------
 for m in subdomains resolve osint ports urls javascript params vulns \
-         wordlist fuzz verify analyze chains diff report; do
+         websec wordlist fuzz verify analyze chains diff report; do
   # shellcheck source=/dev/null
   source "$RECONTA_HOME/modules/$m.sh"
 done
@@ -235,6 +237,7 @@ module_params
 module_wordlist
 
 module_vulns
+module_websec    # graphql/http-methods/CORS/clickjacking → vulns.txt
 module_fuzz      # active bug hunting → findings appended to vulns.txt
 module_verify    # safe reproductions for each finding → poc.txt
 

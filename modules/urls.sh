@@ -24,12 +24,12 @@ module_urls() {
   local upids=()
   (
     if have_tool gau; then
-      gau --threads "$THREADS" --subs < "$resolved" 2>/dev/null > "$D_URLS/gau.txt"
+      capped "${GAU_TIMEOUT:-300}" gau --threads "$THREADS" --subs < "$resolved" 2>/dev/null > "$D_URLS/gau.txt"
     fi
   ) & upids+=($!)
   (
     if have_tool waybackurls; then
-      waybackurls < "$resolved" 2>/dev/null > "$D_URLS/wayback.txt"
+      capped "${GAU_TIMEOUT:-300}" waybackurls < "$resolved" 2>/dev/null > "$D_URLS/wayback.txt"
     fi
   ) & upids+=($!)
   wait "${upids[@]}" 2>/dev/null
